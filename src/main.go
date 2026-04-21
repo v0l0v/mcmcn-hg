@@ -285,7 +285,7 @@ cover:
 *Analizado por Micomicona AI*
 `, 
 		escapeYAML(item.Title),
-		pubDate.Format(time.RFC3339),
+		pubDate.In(time.Local).Format("2006-01-02 15:04"),
 		sourceName,
 		tagsStr,
 		escapeYAML(summary),
