@@ -135,9 +135,7 @@ func generateMarkdown(sourceName string, item *gofeed.Item) {
 	filePath := filepath.Join(OutputDir, fileName)
 
 	// SI YA EXISTE, NO HACEMOS NADA (Para no gastar API ni duplicar)
-	if _, err := os.Stat(filePath); err == nil {
-		return
-	}
+	// Si el archivo ya existe, lo sobrescribimos para actualizar fecha y contenido
 
 	imageURL := extractImage(item)
 
