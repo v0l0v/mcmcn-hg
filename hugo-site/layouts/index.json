@@ -1,0 +1,14 @@
+[
+  {{- range $index, $page := .Site.RegularPages -}}
+    {{- if $index -}},{{- end -}}
+    {
+      "title": {{ $page.Title | jsonify }},
+      "link": {{ $page.RelPermalink | jsonify }},
+      "category": {{ if $page.Params.categories }}{{ index $page.Params.categories 0 | jsonify }}{{ else }}""{{ end }},
+      "type": {{ if in $page.Params.tags "Agenda" }}"Agenda"{{ else }}"Noticia"{{ end }},
+      "summary": {{ $page.Params.summary | jsonify }},
+      "image": {{ $page.Params.featured_image | jsonify }},
+      "date": {{ $page.Date.Format "02 Jan, 2006" | jsonify }}
+    }
+  {{- end -}}
+]

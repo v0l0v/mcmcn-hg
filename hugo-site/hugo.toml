@@ -1,0 +1,13 @@
+baseURL = 'https://micomicona.local/'
+languageCode = 'es-es'
+title = 'Micomicona: Noticiero y Agenda'
+theme = 'ananke'
+
+[params]
+    description = "El portal de noticias de La Manchuela"
+    featured_image = "/images/default.jpg"
+    recent_posts_number = 20
+paginate = 24
+
+[outputs]
+    home = ["HTML", "RSS", "JSON"]

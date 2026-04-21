@@ -1,0 +1,98 @@
+{{ define "main" }}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+    
+    body { font-family: 'Outfit', sans-serif; }
+    
+    /* Ocultar cabeceras redundantes del tema */
+    .site-header, header.cover { display: none !important; }
+    
+    .post-content { line-height: 1.8; color: #333; font-size: 1.1rem; }
+    
+    .sidebar-card {
+        transition: transform 0.2s;
+        border-left: 3px solid transparent;
+    }
+    .sidebar-card:hover {
+        transform: translateX(5px);
+        border-left: 3px solid #e74c3c;
+        background: #fdf2f2;
+    }
+    .badge-mini {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+  </style>
+
+  <main class="cf ph3 ph5-l pv4 center mw9">
+    <div class="flex flex-wrap flex-nowrap-l">
+      
+      <!-- Contenido Principal -->
+      <article class="w-100 w-70-l pr4-l">
+        <header class="mb4">
+          <p class="f6 ttu tracked gray b mb2">{{ index .Params.categories 0 }}</p>
+          <h1 class="f1 lh-title mt0 mb3 dark-blue">{{ .Title }}</h1>
+          <time class="f6 gray">{{ .Date.Format "02 de January, 2006" }}</time>
+        </header>
+
+        {{ if .Params.featured_image }}
+          <img src="{{ .Params.featured_image }}" class="w-100 br4 shadow-4 mb4" alt="{{ .Title }}">
+        {{ end }}
+
+        <div class="post-content">
+          {{ .Content }}
+        </div>
+        
+        <div class="mt5 pv4 bt b--light-gray">
+            <a href="/" class="link dim dark-gray f6 b ttu tracked">← Volver a la portada</a>
+        </div>
+      </article>
+
+      <!-- Sidebar Inteligente -->
+      <aside class="w-100 w-30-l mt4 mt0-l">
+        <div class="bg-near-white pa4 br4">
+          <h3 class="f4 b mb4 dark-blue">Relacionado con esto</h3>
+          
+          {{ $related := .Site.RegularPages.Related . | first 5 }}
+          {{ with $related }}
+            {{ range . }}
+              <a href="{{ .RelPermalink }}" class="db link black mb3 pa2 br3 sidebar-card bg-white shadow-sm">
+                <div class="flex items-center">
+                  {{ if .Params.featured_image }}
+                    <div class="w3 h3 br2 overflow-hidden mr3 flex-shrink-0">
+                      <img src="{{ .Params.featured_image }}" class="w-100 h-100 object-cover">
+                    </div>
+                  {{ end }}
+                  <div>
+                    <h4 class="f6 mv0 lh-copy outfit-font">{{ .Title | truncate 60 }}</h4>
+                    <span class="badge-mini bg-light-gray gray mt1 db w-fit">
+                      {{ if in .Params.tags "Agenda" }}📅 Agenda{{ else }}🗞️ Noticia{{ end }}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            {{ end }}
+          {{ else }}
+            <p class="f6 gray">Buscando más historias similares...</p>
+          {{ end }}
+
+          <h3 class="f4 b mb4 mt5 dark-blue">Próximos eventos</h3>
+          {{ range (where .Site.RegularPages "Params.tags" "intersect" (slice "Agenda")) | first 3 }}
+             <a href="{{ .RelPermalink }}" class="db link black mb3 pa2 br3 sidebar-card bg-white shadow-sm">
+                <div class="flex items-center">
+                  <div class="w-100">
+                    <h4 class="f6 mv0 lh-copy b">{{ .Title | truncate 50 }}</h4>
+                    <p class="f7 gray mv1">{{ .Params.summary | truncate 60 }}</p>
+                  </div>
+                </div>
+              </a>
+          {{ end }}
+        </div>
+      </aside>
+
+    </div>
+  </main>
+{{ end }}

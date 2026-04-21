@@ -1,0 +1,37 @@
+# Entorno - NUNCA SUBIR SECRETS
+.env
+.env.local
+.env.*.local
+
+# API Keys y Credenciales
+GEMINI_API_KEY
+
+# Binarios compilados
+bin/micomicona-fetcher
+src/fetcher
+
+# Hugo
+hugo-site/public/
+hugo-site/resources/
+hugo-site/.hugo_build.lock
+
+# Posts generados automáticamente (demasiados archivos)
+hugo-site/content/posts/*.md
+
+# Dependencias Go
+go.sum
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

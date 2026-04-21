@@ -1,0 +1,236 @@
+{{ define "main" }}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+    
+    .site-header, header.cover { display: none !important; }
+
+    .hero-section {
+      background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('/images/hero.png');
+      background-size: cover;
+      background-position: center;
+      height: 450px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      font-family: 'Outfit', sans-serif;
+      margin-bottom: 3rem;
+      border-radius: 0 0 2rem 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .hero-title {
+      font-size: 5rem;
+      font-weight: 900;
+      letter-spacing: -2px;
+      margin: 0;
+      text-transform: uppercase;
+      text-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+    }
+
+    .hero-subtitle {
+      font-size: 1.5rem;
+      font-weight: 400;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+      max-width: 600px;
+      line-height: 1.4;
+    }
+
+    #search-input {
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    #search-input:focus {
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+
+    #search-input:focus::placeholder {
+      color: transparent;
+    }
+
+    .badge-agenda {
+      background: #e74c3c;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-left: 5px;
+    }
+  </style>
+
+  <div class="hero-section">
+    <h1 class="hero-title">MICOMICONA</h1>
+    <p class="hero-subtitle">Las noticias de Castilla-La Mancha al minuto.<br>Cultura, agenda y actualidad rural.</p>
+  </div>
+
+  <article class="cf ph3 ph5-l center mw9">
+    
+    {{ $pages := (where .Site.RegularPages "Section" "posts") }}
+    {{ $pages = sort $pages "Title" "asc" }}
+    {{ $pages = sort $pages "Date" "desc" }}
+    {{ $paginator := .Paginate $pages }}
+
+    <div class="mw7 center mb5">
+        <div class="relative">
+            <input type="text" id="search-input" placeholder="🔍 Encuentra cualquier noticia, evento o rincón de Castilla-La Mancha..." 
+                   class="w-100 pa3 br-pill ba b--black-10 shadow-2 outline-0 f4 tc"
+                   autocomplete="off">
+        </div>
+    </div>
+
+    <div id="post-container" class="flex flex-wrap justify-center">
+      {{ range $paginator.Pages }}
+        <div class="post-card fl w-100 w-50-m w-25-l pa2 mb3">
+          <a href="{{ .RelPermalink }}" class="db link dim black b--black-10 ba br4 overflow-hidden shadow-4 bg-white flex flex-column h-100">
+            {{ if .Params.featured_image }}
+              <div class="aspect-ratio aspect-ratio--16x9">
+                <div class="aspect-ratio--object cover bg-center" style="background-image: url('{{ .Params.featured_image }}');"></div>
+              </div>
+            {{ else }}
+              <div class="aspect-ratio aspect-ratio--16x9 bg-light-gray flex items-center justify-center">
+                <span class="f2 light-silver">📷</span>
+              </div>
+            {{ end }}
+            <div class="pa3 flex-grow-1">
+              <div class="flex items-center mb1">
+                <p class="f7 gray ttu tracked b mv0">{{ if .Params.categories }}{{ index .Params.categories 0 }}{{ end }}</p>
+                {{ if in .Params.tags "Agenda" }}
+                  <span class="badge-agenda">📅 Agenda</span>
+                {{ end }}
+              </div>
+              <h2 class="f5 mv0 lh-title dark-blue outfit-font">{{ .Title }}</h2>
+              {{ if .Params.summary }}
+                <p class="f7 gray mt2 mb0 italic lh-copy">“{{ .Params.summary }}”</p>
+              {{ end }}
+              <p class="f7 silver mt2 mb0">{{ .Date.Format "02 Jan, 2006" }}</p>
+            </div>
+          </a>
+        </div>
+      {{ end }}
+    </div>
+
+    <div id="search-results" class="flex-wrap justify-center" style="display:none;"></div>
+
+    <div id="pagination-stuff">
+        <div id="infinite-scroll-sentinel" class="pv4 tc">
+          <div id="loading-indicator" class="gray f6" style="display:none;">Cargando más historias...</div>
+        </div>
+        <div id="pagination-nav" style="display:none;">
+          {{ if $paginator.HasNext }}
+            <a id="next-page-link" href="{{ $paginator.Next.URL }}">Siguiente</a>
+          {{ end }}
+        </div>
+    </div>
+
+  </article>
+
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const postContainer = document.getElementById('post-container');
+        const paginationStuff = document.getElementById('pagination-stuff');
+        let fuse = null;
+
+        fetch('/index.json')
+            .then(response => response.json())
+            .then(data => {
+                fuse = new Fuse(data, {
+                    keys: ['title', 'category', 'summary'],
+                    threshold: 0.35,
+                    distance: 100
+                });
+            });
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                postContainer.style.display = 'flex';
+                paginationStuff.style.display = 'block';
+                return;
+            }
+            if (fuse) {
+                const results = fuse.search(query);
+                renderResults(results);
+                searchResults.style.display = 'flex';
+                postContainer.style.display = 'none';
+                paginationStuff.style.display = 'none';
+            }
+        });
+
+        function renderResults(results) {
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="pv5 gray f4 tc w-100">No se han encontrado noticias ✨</div>';
+                return;
+            }
+            let html = '';
+            results.slice(0, 40).forEach(result => {
+                const item = result.item;
+                const agendaBadge = item.type === 'Agenda' ? '<span class="badge-agenda">📅 Agenda</span>' : '';
+                html += `
+                    <div class="fl w-100 w-50-m w-25-l pa2 mb3">
+                      <a href="${item.link}" class="db link dim black b--black-10 ba br4 overflow-hidden shadow-4 bg-white flex flex-column h-100">
+                        <div class="aspect-ratio aspect-ratio--16x9">
+                          <div class="aspect-ratio--object cover bg-center" style="background-image: url('${item.image || ''}'); background-color: #eee;"></div>
+                        </div>
+                        <div class="pa3 flex-grow-1">
+                          <div class="flex items-center mb1">
+                            <p class="f7 gray ttu tracked b mv0">${item.category}</p>
+                            ${agendaBadge}
+                          </div>
+                          <h2 class="f5 mv0 lh-title dark-blue">${item.title}</h2>
+                          ${item.summary ? `<p class="f7 gray mt2 mb0 italic lh-copy">“${item.summary}”</p>` : ''}
+                          <p class="f7 silver mt2 mb0">${item.date}</p>
+                        </div>
+                      </a>
+                    </div>
+                `;
+            });
+            searchResults.innerHTML = html;
+        }
+
+        const sentinel = document.getElementById('infinite-scroll-sentinel');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        let nextPageLink = document.getElementById('next-page-link');
+        let isLoading = false;
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !isLoading && nextPageLink && searchInput.value.length < 2) {
+                loadNextPage();
+            }
+        }, { threshold: 0.1 });
+        if (sentinel) observer.observe(sentinel);
+        async function loadNextPage() {
+            if (isLoading || !nextPageLink) return;
+            isLoading = true;
+            loadingIndicator.style.display = 'block';
+            try {
+                const response = await fetch(nextPageLink.href);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newPosts = doc.querySelectorAll('.post-card');
+                newPosts.forEach(post => postContainer.appendChild(post));
+                const newNextPageLink = doc.getElementById('next-page-link');
+                if (newNextPageLink) {
+                    nextPageLink.href = newNextPageLink.href;
+                } else {
+                    nextPageLink = null;
+                    observer.unobserve(sentinel);
+                    loadingIndicator.innerHTML = "Fin de la Manchuela";
+                }
+            } catch (error) { console.error(error); } 
+            finally { isLoading = false; loadingIndicator.style.display = 'none'; }
+        }
+    });
+  </script>
+{{ end }}
