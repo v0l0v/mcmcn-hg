@@ -130,6 +130,10 @@ func escapeYAML(s string) string {
 }
 
 func processWithAI(title, description string) (summary string, isAgenda bool) {
+    // Gemini desactivado: devolvemos valores vacíos para evitar llamadas externas.
+    // Mantener la firma para compatibilidad con el resto del código.
+    return "", false
+}
 	if apiKey == "" {
 		return "", false
 	}
